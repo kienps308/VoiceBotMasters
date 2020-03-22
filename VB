@@ -1,0 +1,173 @@
+
+import datetime
+
+import speech_recognition as sr
+import random
+from gtts import gTTS
+import os
+import time
+from mutagen.mp3 import MP3
+import eel
+eel.init('web')
+greetings = ['hey there', 'hello', 'hi', 'Hai', 'hey!', 'hey']
+question = ['how are you', 'how are you doing']
+responses = ['Okay just tired of life', "I'm fine thank you"]
+q = ['do you love me']
+love = ['Kien love you from the bottom of his heart']
+old = ['how old are you']
+var = ['Old enough to be by your side']
+var1 = ['who made you', 'who created you']
+var2 = ['I was created by Kien right in his computer.', 'Phan Sy Kien', 'Some guy whom i never got to know.']
+var3 = ['what time is it', 'what is the time', 'time']
+var4 = ['who are you', 'what is your name']
+cmd1 = ['open browser', 'open google']
+
+cmd3 = ['tell a joke', 'tell me a joke', 'say something funny', 'tell something funny']
+jokes = ['Can a kangaroo jump higher than a house? Of course, a house doesnt jump at all.',
+         'My dog used to chase people on a bike a lot. It got so bad, finally I had to take his bike away.',
+         'Doctor: Im sorry but you suffer from a terminal illness and have only 10 to live.Patient: What do you mean, 10? 10 what? Months? Weeks?!"Doctor Nine.']
+
+cmd9 = ['thank you']
+
+repfr9 = ['youre welcome', 'glad i could help you']
+muQues1 = ['tell me about a famous person in the music world']
+muQues2 = ['can you give me more information', 'where does she live']
+muQues3 = ['what is her style in music']
+muQues4 = ['what are the achievements that she has achieved', 'what have Taylor accomplished']
+spQues1 = ['tell me about a famous person in the sport world']
+spQues2 = ['can you give me more information?', 'Where does he live']
+spQues3 = ['which club did he played for']
+spQues4 = ['what are the achievements that he has achieved']
+muAns1= ['a famous person i wanna talk to you is taylor swift']
+muAns2 = ['of course. taylor alison swift was born on december 13, 1989, in reading, pennsylvania, she is an american singer-songwriter']
+muAns3 = ['she is known for narrative songs about her personal life, which have received  widespread  media coverage']
+muAns4 = ['she has released a series of famous albums such as: lover, reputation, 1989, red, fearless, speak now, more ,and many songs have billion views like: you belong to me, blank space, shake it off']
+spAns1 = ['a famous person i wanna talk to you is lionel messi']
+spAns2 = ['lionel andres messi cuccittini was born on june 24,  1987, in rosario, argentina, is an argentine professional footballer']
+spAns3 = ['he plays as a forward and captains both spanish club barcelona and the argentina national team']
+spAns4 = ['often considered the best player in the world and widely regarded as one of the greatest players of all time, messi has won a record six golden ball awards, and a record six european golden shoes']
+
+@eel.expose
+def recognize_speech_from_mic(recognizer, microphone):
+    """Transcribe speech from recorded from `microphone`.
+    Returns a dictionary with three keys:
+    "success": a boolean indicating whether or not the API request was
+               successful
+    "error":   `None` if no error occured, otherwise a string containing
+               an error message if the API could not be reached or
+               speech was unrecognizable
+    "transcription": `None` if speech could not be transcribed,
+               otherwise a string containing the transcribed text
+    """
+    # check that recognizer and microphone arguments are appropriate type
+    if not isinstance(recognizer, sr.Recognizer):
+        raise TypeError("`recognizer` must be `Recognizer` instance")
+
+    if not isinstance(microphone, sr.Microphone):
+        raise TypeError("`microphone` must be `Microphone` instance")
+
+    # adjust the recognizer sensitivity to ambient noise and record audio
+    # from the microphone
+    with microphone as source:
+        recognizer.adjust_for_ambient_noise(source)  # #  analyze the audio source for 1 second
+        audio = recognizer.listen(source)
+
+    # set up the response object
+    response = {
+        "success": True,
+        "error": None,
+        "transcription": None,
+        "reply": None
+    }
+
+    # try recognizing the speech in the recording
+    # if a RequestError or UnknownValueError exception is caught,
+    #   update the response object accordingly
+    try:
+        response["transcription"] = recognizer.recognize_google(audio)
+        now = datetime.datetime.now()
+        if response["transcription"] in greetings:
+            response["reply"] = random.choice(greetings)
+        elif response["transcription"] in question:
+            response["reply"] = random.choice(responses)
+        elif response["transcription"] in var1:
+            response["reply"] = random.choice(var2)
+        elif response["transcription"] in var3:
+            response["reply"] = now.strftime("The time is %H:%M")
+        elif response["transcription"] in cmd3:
+            response["reply"] = random.choice(jokes)
+        elif response["transcription"] in cmd3:
+            response["reply"] = random.choice(jokes)
+        elif response["transcription"] in old:
+            response["reply"] = random.choice(var)
+        elif response["transcription"] in muQues1:
+            response["reply"] = random.choice(muAns1)
+        elif response["transcription"] in muQues2:
+            response["reply"] = random.choice(muAns2)
+        elif response["transcription"] in muQues3:
+            response["reply"] = random.choice(muAns3)
+        elif response["transcription"] in muQues4:
+            response["reply"] = random.choice(muAns4)
+        elif response["transcription"] in spQues1:
+            response["reply"] = random.choice(spAns1)
+        elif response["transcription"] in spQues2:
+            response["reply"] = random.choice(spAns2)
+        elif response["transcription"] in spQues3:
+            response["reply"] = random.choice(spAns3)
+        elif response["transcription"] in spQues4:
+            response["reply"] = random.choice(spAns4)
+    except sr.RequestError:
+
+        # API was unreachable or unresponsive
+        response["success"] = False
+        response["error"] = "API unavailable/unresponsive"
+    except sr.UnknownValueError:
+        # speech was unintelligible
+        response["error"] = "Unable to recognize speech"
+
+    return response
+
+
+voice = eel.male()
+if voice== None:
+    voice = "male"
+@eel.expose
+def textToSpeech(mytext, voice):
+    if(voice == "female"):
+        language = 'en'
+        myobj = gTTS(text=mytext, lang=language, slow=False)
+        myobj.save("welcome.mp3")
+        audio = MP3("welcome.mp3")
+        os.system("start welcome.mp3")
+        time.sleep(audio.info.length)
+    else:
+        import pyttsx
+        engine = pyttsx.init()
+        engine.say(mytext)
+        engine.runAndWait()
+
+@eel.expose
+def controller():
+        recognizer = sr.Recognizer()
+        mic = sr.Microphone(device_index=1)
+        response = recognize_speech_from_mic(recognizer, mic)
+        if response["transcription"]!= None:
+            eel.input(response["transcription"])
+        print('\nSuccess : {}\nError   : {}\n\nText from Speech\n{}\n\n{}' \
+              .format(response['success'],
+                      response['error'],
+                      '-' * 17,
+                      response['transcription'],
+                      response))
+        print (response["reply"])
+
+        if response["reply"] != None:
+            eel.reply(response["reply"])
+            eel.male(response["reply"])
+        elif response["transcription"] != None:
+            eel.reply("Sorry i don't know how to response to that")
+            eel.male("Sorry i don't know how to response to that")
+
+
+eel.start('UI.html')
+
